@@ -17,7 +17,7 @@ for ( const sudo of sudos) { if (sudo) { sudonumero = sudo.replace(/[^0-9]/g, ''
 
 }   const ownerjid = conf.NUMERO_OWNER.replace(/[^0-9]/g) + "@s.whatsapp.net"; const mentionedJid = sudos.concat([ownerjid]) console.log(sudos); console.log(mentionedJid) zk.sendMessage( dest, { image : { url : mybotpic() }, caption : msg, mentions : mentionedJid } ) } else { const vcard = 'BEGIN:VCARD\n' + 'VERSION:3.0\n' + 'FN:' + conf.OWNER_NAME + '\n' + 'ORG:undefined;\n' + 'TEL;type=CELL;type=VOICE;waid=' + conf.NUMERO_OWNER + ':+' + conf.NUMERO_OWNER + '\n' + 'END:VCARD'; zk.sendMessage(dest, { contacts: { displayName: conf.OWNER_NAME, contacts: [{ vcard }], }, },{quoted:ms}); } });
 
-zokou({ nomCom: "dev", categorie: "Devs", reaction: "🚜" }, async (dest, zk, commandeOptions) => { const { ms, mybotpic } = commandeOptions;
+zokou({ nomCom: "dev1", categorie: "Devs", reaction: "🚜" }, async (dest, zk, commandeOptions) => { const { ms, mybotpic } = commandeOptions;
 
 const devs = [
   { nom: "bmbtech", numero: "255767862457" },

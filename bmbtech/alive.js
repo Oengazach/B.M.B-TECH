@@ -1,176 +1,82 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const { zokou } = require("../framework/zokou");
-const axios = require("axios");
-
-const githubRawBaseUrl =
-  "https://raw.githubusercontent.com/frameworkaitech/bwm-xmd-music/master/tiktokmusic";
-
-const audioFiles = Array.from({ length: 161 }, (_, i) => `sound${i + 1}.mp3`);
-const images = [
-  "https://files.catbox.moe/vhlxdk.jpg",
-  "https://files.catbox.moe/6p6jkb.jpg",
-  "https://files.catbox.moe/pqgoij.jpeg",
-  "https://files.catbox.moe/bddwnw.jpeg",
-  "https://files.catbox.moe/f6zee8.jpeg",
-  "https://files.catbox.moe/rfysfu.jpg",
-  "https://files.catbox.moe/omgszj.jpg",
-  "https://files.catbox.moe/9ntbi7.webp",
-  "https://files.catbox.moe/nwvoq3.jpg",
-  "https://files.catbox.moe/040de7.jpeg",
-  "https://files.catbox.moe/3qkejj.jpeg",
-];
-
-// List of motivational quotes or facts
-const factsOrQuotes = [
-  "✨ Did you know? The first computer programmer was Ada Lovelace in 1843!",
-  "💡 Success is not final; failure is not fatal: It is the courage to continue that counts.",
-  "🌟 Keep going, you're closer to your goals than you think!",
-  "🔥 Tip: Automate the boring stuff to focus on the creative!",
-  "🌐 Fun Fact: The first email was sent in 1971 by Ray Tomlinson.",
-];
+const { zokou } = require('../framework/zokou');
+const { addOrUpdateDataInAlive, getDataFromAlive } = require('../bdd/alive');
+const moment = require("moment-timezone");
+const s = require(__dirname + "/../set");
 
 zokou(
-  { nomCom: "life", reaction: "🪄", nomFichier: __filename },
-  async (dest, zk, commandeOptions) => {
-    console.log("Alive command triggered!");
+  {
+    nomCom: 'alive',
+    categorie: 'General',
+    reaction: "🌲"
+  },
+  async (dest, zk, { ms, arg, repondre, superUser }) => {
+    const data = await getDataFromAlive();
+    const time = moment().tz('Etc/GMT').format('HH:mm:ss');
+    const date = moment().format('DD/MM/YYYY');
+    const mode = (s.MODE.toLowerCase() === "yes") ? "public" : "private";
 
-    const contactName = commandeOptions?.ms?.pushName || "Unknown Contact"; // Sender's name or "Unknown Contact"
-    const hour = new Date().getHours();
+    const contextInfo = {
+      forwardingScore: 999,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: "120363382023564830@newsletter",
+        newsletterName: "𝙱.𝙼.𝙱-𝚇𝙼𝙳",
+        serverMessageId: 1
+      }
+    };
 
-    // Dynamic greeting based on time
-    const greeting =
-      hour < 12
-        ? "Good Morning 🌅"
-        : hour < 18
-        ? "Good Afternoon ☀️"
-        : "Good Evening 🌠";
+    if (!arg || !arg[0]) {
+      let aliveMsg;
 
-    try {
-      // Randomly pick an audio file and image
-      const randomAudioFile = audioFiles[Math.floor(Math.random() * audioFiles.length)];
-      const randomImage = images[Math.floor(Math.random() * images.length)];
-      const randomFactOrQuote = factsOrQuotes[Math.floor(Math.random() * factsOrQuotes.length)];
-
-      const audioUrl = `${githubRawBaseUrl}/${randomAudioFile}`;
-
-      // Verify if the audio file exists
-      const audioResponse = await axios.head(audioUrl);
-      if (audioResponse.status !== 200) {
-        throw new Error("Audio file not found!");
+      if (data) {
+        const { message, lien } = data;
+        aliveMsg = `B.M.B-TECH\n\n◈━━━━━━━━━━━━━━━━◈\n│❒ *🔥 bmb tech 𝐢𝐬 𝐀𝐋𝐈𝐕𝐄, Yo!* 🔥\n│❒ *👑 𝐎𝐰𝐧𝐞𝐫*: ${s.OWNER_NAME}\n│❒ *🌐 𝐌𝐨𝐝𝐞*: ${mode}\n│❒ *📅 𝐃𝐚𝐭𝐞*: ${date}\n│❒ *⏰ 𝐓𝐢𝐦𝐞 (GMT)*: ${time}\n│❒ *💬 𝐌𝐞𝐬𝐬𝐚𝐠𝐞*: ${message}\n│❒ *🤖 𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐛𝐲 𝙱.𝙼.𝙱-𝚇𝙼𝙳*\n◈━━━━━━━━━━━━━━━━◈`;
+        try {
+          if (lien) {
+            if (lien.match(/\.(mp4|gif)$/i)) {
+              await zk.sendMessage(dest, {
+                video: { url: lien },
+                caption: aliveMsg,
+                contextInfo
+              }, { quoted: ms });
+            } else if (lien.match(/\.(jpeg|png|jpg)$/i)) {
+              await zk.sendMessage(dest, {
+                image: { url: lien },
+                caption: aliveMsg,
+                contextInfo
+              }, { quoted: ms });
+            } else {
+              await zk.sendMessage(dest, {
+                text: aliveMsg,
+                contextInfo
+              }, { quoted: ms });
+            }
+          } else {
+            await zk.sendMessage(dest, {
+              text: aliveMsg,
+              contextInfo
+            }, { quoted: ms });
+          }
+        } catch (e) {
+          console.error("Error:", e);
+          repondre(`B.M.B-TECH\n\n◈━━━━━━━━━━━━━━━━◈\n│❒ OOPS! 𝔗𝔬𝔵𝔦𝔠 𝔐𝔇 failed to show off: ${e.message} 😡 Try again! 😣\n◈━━━━━━━━━━━━━━━━◈`);
+        }
+      } else {
+        aliveMsg = `B.M.B-TECH\n\n◈━━━━━━━━━━━━━━━━◈\n│❒ *🔥 bmb tech 𝐢𝐬 𝐀𝐋𝐈𝐕𝐄, Yo!* 🔥\n│❒ *👑 𝐎𝐰𝐧𝐞𝐫*: ${s.OWNER_NAME}\n│❒ *🌐 𝐌𝐨𝐝𝐞*: ${mode}\n│❒ *📅 𝐃𝐚𝐭𝐞*: ${date}\n│❒ *⏰ 𝐓𝐢𝐦𝐞 (GMT)*: ${time}\n│❒ *💬 𝐌𝐞𝐬𝐬𝐚𝐠𝐞*: Yo, I'm bmb tech, ready to rock! Set a custom vibe with *alive [message];[link]*! 😎\n│❒ *🤖 𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐛𝐲 𝙱.𝙼.𝙱-𝚇𝙼𝙳*\n◈━━━━━━━━━━━━━━━━◈`;
+        await zk.sendMessage(dest, {
+          text: aliveMsg,
+          contextInfo
+        }, { quoted: ms });
+      }
+    } else {
+      if (!superUser) {
+        repondre(`𝐓𝐎𝐗𝐈𝐂-𝐌𝐃\n\n◈━━━━━━━━━━━━━━━━◈\n│❒ 🛑 Yo, only 𝐱𝐡_𝐜𝐥𝐢𝐧𝐭𝐨𝐧 can mess with 𝔗𝔬𝔵𝔦𝔠 𝔐𝔇’s vibe! 😡\n◈━━━━━━━━━━━━━━━━◈`);
+        return;
       }
 
-      // Generate dynamic emojis based on contact name
-      const emojis = contactName
-        .split("")
-        .map((char) => String.fromCodePoint(0x1f600 + (char.charCodeAt(0) % 80)))
-        .join("");
-
-      // Randomized external ad reply content
-      const externalAdReply = {
-        title: `🙋 ${greeting} ${contactName} 🙋 `,
-        body: "Tap here to join our official channel!",
-        thumbnailUrl: randomImage,
-        sourceUrl: "https://whatsapp.com/channel/0029VawO6hgF6sn7k3SuVU3z",
-        showAdAttribution: true,
-        mediaType: 1,
-        renderLargerThumbnail: true,
-      };
-
-      // Send the custom message
-      await zk.sendMessage(dest, {
-        image: { url: randomImage },
-        caption: `${greeting} ${contactName}\n\n${randomFactOrQuote}\n\n🙋 Always Active 🙋\n🌟 Contact: ${contactName}\n🌐 [Visit Channel](${externalAdReply.sourceUrl})\n\n${emojis}`,
-        audio: { url: audioUrl },
-        mimetype: "audio/mpeg",
-        ptt: true,
-        contextInfo: {
-          quotedMessage: {
-            conversation: "𝙱.𝙼.𝙱-𝚇𝙼𝙳 😎",
-          },
-          externalAdReply,
-        },
-      });
-
-      console.log("Alive message sent successfully with dynamic features.");
-    } catch (error) {
-      console.error("Error sending Alive message:", error.message);
+      const [texte, tlien] = arg.join(' ').split(';');
+      await addOrUpdateDataInAlive(texte, tlien);
+      repondre(`𝐓𝐎𝐗𝐈𝐂-𝐌𝐃\n\n◈━━━━━━━━━━━━━━━━◈\n│❒ ✅ 𝔗𝔬𝔵𝔦𝔠 𝔐𝔇’s alive message updated! You’re killing it! 🔥\n◈━━━━━━━━━━━━━━━━◈`);
     }
   }
 );
-
-console.log("WhatsApp bot is ready!");
-
-
-
-
-zokou(
-  { nomCom: "test", reaction: "🧡", nomFichier: __filename },
-  async (dest, zk, commandeOptions) => {
-    console.log("Alive command triggered!");
-
-    const contactName = commandeOptions?.ms?.pushName || "Unknown Contact"; // Sender's name or "Unknown Contact"
-    const hour = new Date().getHours();
-
-    // Dynamic greeting based on time
-    const greeting =
-      hour < 12
-        ? "Good Morning 🌤"
-        : hour < 18
-        ? "Good Afternoon 🌞"
-        : "Good Evening 🌠";
-
-    try {
-      // Randomly pick an audio file and image
-      const randomAudioFile = audioFiles[Math.floor(Math.random() * audioFiles.length)];
-      const randomImage = images[Math.floor(Math.random() * images.length)];
-      const randomFactOrQuote = factsOrQuotes[Math.floor(Math.random() * factsOrQuotes.length)];
-
-      const audioUrl = `${githubRawBaseUrl}/${randomAudioFile}`;
-
-      // Verify if the audio file exists
-      const audioResponse = await axios.head(audioUrl);
-      if (audioResponse.status !== 200) {
-        throw new Error("Audio file not found!");
-      }
-
-      // Generate dynamic emojis based on contact name
-      const emojis = contactName
-        .split("")
-        .map((char) => String.fromCodePoint(0x1f600 + (char.charCodeAt(0) % 80)))
-        .join("");
-
-      // Randomized external ad reply content
-      const externalAdReply = {
-        title: `🙋 ${greeting}, ${contactName} 🙋 `,
-        body: "Tap here to join our official channel!",
-        thumbnailUrl: randomImage,
-        sourceUrl: "https://whatsapp.com/channel/0029VawO6hgF6sn7k3SuVU3z",
-        showAdAttribution: true,
-        mediaType: 1,
-        renderLargerThumbnail: true,
-      };
-
-      // Send the custom message
-      await zk.sendMessage(dest, {
-        image: { url: randomImage },
-        caption: `${greeting}, ${contactName}!\n\n${randomFactOrQuote}\n\n🙋 Always Active 🙋\n🌟 Contact: ${contactName}\n🌐 [Visit Channel](${externalAdReply.sourceUrl})\n\n${emojis}`,
-        audio: { url: audioUrl },
-        mimetype: "audio/mpeg",
-        ptt: true,
-        contextInfo: {
-          quotedMessage: {
-            conversation: "B.M.B-TECH😎",
-          },
-          externalAdReply,
-        },
-      });
-
-      console.log("Alive message sent successfully with dynamic features.");
-    } catch (error) {
-      console.error("Error sending Alive message:", error.message);
-    }
-  }
-);
-
-console.log("WhatsApp bot is ready!");
